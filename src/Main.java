@@ -19,8 +19,8 @@ public class Main {
     public static void main(String[] args) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String data;
-        int[] start = new int[]{0, 1, 2, 3, 4};
-        int[] run = new int[]{2, 3, 1, 5, 4};
+        int[] start = new int[]{5,11,238,254,330,637,1042,1163,1364,1404,1737,1885,2149,2230,2273,2327,2441,2498,2875,2954};
+        int[] run = new int[]{100,20,80,20,140,220,360,120,170,170,180,40,190,330,360,200,190,110,250,200};
         fcfs(start,run);
         sjf(start, run);
         strf(start, run);
@@ -40,17 +40,16 @@ public class Main {
      * @param r run times array
      */
     private static void roundRobin(int[] s, int[] r){
-        int q = 2;
+        int q = 100;
         int clock = 0;
         int next = 0;
         int temp = 0;
         int ta_total = 0;
         int wait_total = 0;
         int resp_total = 0;
-        int qtotal = 2;
+        int qtotal = 100;
         int[] rrStart = new int[s.length];
         int[] rrRun = new int[r.length];
-        int[] indexes = new int[s.length];
         int[] fr = new int[r.length];
         Queue<Integer> theQueue = new LinkedList<>();
         for(int i = 0; i < s.length; i++){
@@ -59,8 +58,8 @@ public class Main {
         for(int i = 0; i < r.length; i++){
             rrRun[i] = r[i];
         }
-        for(int i = 0; i < s.length; i++){
-            indexes[i] = i;
+        for(int i = 0; i < fr.length; i++){
+            fr[i] = -1;
         }
         fr[0] = clock;
         clock += q;
@@ -70,11 +69,14 @@ public class Main {
             }
         }
         next = theQueue.peek();
-        if(fr[next] <= 0){
+        if(fr[next] < 0){
             fr[next] = clock;
         }
         rrRun[next] -= q;
         if(rrRun[next] == 0){
+            ta_total += Math.abs(clock - rrStart[next]);
+            wait_total += Math.abs((clock - rrStart[next]) - r[next]);
+            resp_total += Math.abs(fr[next] - rrStart[next]);
             theQueue.remove();
         }else {
             temp = next;
@@ -93,11 +95,14 @@ public class Main {
                 }
             }
             next = theQueue.peek();
+            if(fr[next] < 0){
+                fr[next] = clock - q;
+            }
             rrRun[next] -= q;
             if(rrRun[next] <= 0){
-                ta_total += clock - rrStart[next];
-                wait_total += (clock - rrStart[next]) - r[next];
-                resp_total += fr[next] - rrStart[next];
+                ta_total += Math.abs(clock - rrStart[next]);
+                wait_total += Math.abs((clock - rrStart[next]) - r[next]);
+                resp_total += Math.abs(fr[next] - rrStart[next]);
                 theQueue.remove();
             }else {
                 temp = next;
@@ -192,11 +197,11 @@ public class Main {
             //update map
             queue.replace(runNext, strfRun[runNext]);
             //reset lowest run time
-            if(strfRun[runNext] == 0){
+            if(strfRun[runNext] <= 0){
                 currentLowRunTime = totalRunTime;
-                ta_total += (clock - strfStart[runNext]);
-                wait_total += ((clock - strfStart[runNext])) - r[runNext];
-                resp_total += firstRun[runNext] - strfStart[runNext];
+                ta_total += Math.abs((clock - strfStart[runNext]));
+                wait_total += Math.abs((clock - strfStart[runNext]) - r[runNext]);
+                resp_total += Math.abs(firstRun[runNext] - strfStart[runNext]);
             }
 
 
@@ -229,9 +234,9 @@ public class Main {
         order(sortedStart,sortedRun);
         clock = sortedStart[0];
         for(int i = 0; i < sortedStart.length; i++){
-            ta = (clock + sortedRun[i]) - sortedStart[i];
-            wait = ta - sortedRun[i];
-            resp = clock - sortedStart[i];
+            ta = Math.abs((clock + sortedRun[i]) - sortedStart[i]);
+            wait = Math.abs(ta - sortedRun[i]);
+            resp = Math.abs(clock - sortedStart[i]);
             clock += sortedRun[i];
             ta_total += ta;
             wait_total += wait;
@@ -280,9 +285,9 @@ public class Main {
         int numProcess = s.length;
 
         for(int i = 0; i < s.length; i++){
-            ta = (clock + r[i]) - s[i];
-            wait = ta - r[i];
-            resp = clock - s[i];
+            ta = Math.abs((clock + r[i]) - s[i]);
+            wait = Math.abs(ta - r[i]);
+            resp = Math.abs(clock - s[i]);
             clock += r[i];
             ta_total += ta;
             wait_total += wait;

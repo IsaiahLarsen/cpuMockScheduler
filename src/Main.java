@@ -9,9 +9,10 @@ the copy will receive a zero on this assignment.
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
 
 public class Main {
 
@@ -23,6 +24,7 @@ public class Main {
         fcfs(start,run);
         sjf(start, run);
         strf(start, run);
+        roundRobin(start, run);
 //
 //        while((data = in.readLine()) != null){
 //            data.split(" ");
@@ -38,7 +40,73 @@ public class Main {
      * @param r run times array
      */
     private static void roundRobin(int[] s, int[] r){
+        int q = 2;
+        int clock = 0;
+        int next = 0;
+        int temp = 0;
+        int ta_total = 0;
+        int wait_total = 0;
+        int resp_total = 0;
+        int qtotal = 2;
+        int[] rrStart = new int[s.length];
+        int[] rrRun = new int[r.length];
+        int[] indexes = new int[s.length];
+        int[] fr = new int[r.length];
+        Queue<Integer> theQueue = new LinkedList<>();
+        for(int i = 0; i < s.length; i++){
+            rrStart[i] = s[i];
+        }
+        for(int i = 0; i < r.length; i++){
+            rrRun[i] = r[i];
+        }
+        for(int i = 0; i < s.length; i++){
+            indexes[i] = i;
+        }
+        fr[0] = clock;
+        clock += q;
+        for(int i = 0; i < rrStart.length; i++){
+            if(rrStart[i] <= clock){
+                theQueue.add(i);
+            }
+        }
+        next = theQueue.peek();
+        if(fr[next] <= 0){
+            fr[next] = clock;
+        }
+        rrRun[next] -= q;
+        if(rrRun[next] == 0){
+            theQueue.remove();
+        }else {
+            temp = next;
+            theQueue.remove();
+            theQueue.add(temp);
+        }
 
+        while(!theQueue.isEmpty()){
+
+            clock += q;
+
+            for(int i = 0; i < rrStart.length; i++){
+                if(rrStart[i] <= clock && rrStart[i] > qtotal){
+                    theQueue.add(i);
+                    qtotal = i;
+                }
+            }
+            next = theQueue.peek();
+            rrRun[next] -= q;
+            if(rrRun[next] <= 0){
+                ta_total += clock - rrStart[next];
+                wait_total += (clock - rrStart[next]) - r[next];
+                resp_total += fr[next] - rrStart[next];
+                theQueue.remove();
+            }else {
+                temp = next;
+                theQueue.remove();
+                theQueue.add(temp);
+            }
+        }
+        System.out.println("Round Robin:");
+        printAverages(ta_total, wait_total, resp_total, s.length);
     }
 
     /**
@@ -111,6 +179,9 @@ public class Main {
                 clock += 1;
             }
             if((runNext) >= strfStart.length - 1){
+                if(r[runNext] == strfRun[runNext]) {
+                    firstRun[runNext] = clock - 1;
+                }
                 strfRun[runNext] -= 1;
             }else{
                 if(r[runNext] == strfRun[runNext]) {
@@ -227,6 +298,6 @@ public class Main {
     * @params total turn around time, wait, and response times, and total number of processes
     * */
     private static void printAverages(int t, int w, int r, int n){
-        System.out.println("Average TA: " + t/n + " Average Wait: " + w/n + " Average Response: " + r/n);
+        System.out.printf("Avg. Resp.: %.2f,  Avg. T.A.: %.2f,  Avg. Wait: %.2f\n",(float)r/n, (float)w/n, (float)(t/n) );
     }
 }

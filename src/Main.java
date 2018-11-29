@@ -9,10 +9,7 @@ the copy will receive a zero on this assignment.
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public class Main {
 
@@ -222,7 +219,9 @@ public class Main {
         int ta_total = 0;
         int wait_total = 0;
         int resp_total = 0;
+        int totalTime = 0;
         int numProcess = s.length;
+        int count = numProcess;
         int[] sortedStart = new int[s.length];
         int[] sortedRun = new int[r.length];
         for(int i = 0; i < s.length; i++){
@@ -231,18 +230,53 @@ public class Main {
         for(int i = 0; i < r.length; i++){
             sortedRun[i] = r[i];
         }
-        order(sortedStart,sortedRun);
+        for(int i = 0; i < r.length; i++){
+            totalTime += r[i];
+        }
+
+        ArrayList<Integer> runnable = new ArrayList<>();
         clock = sortedStart[0];
-        for(int i = 0; i < sortedStart.length; i++){
-            ta = Math.abs((clock + sortedRun[i]) - sortedStart[i]);
-            wait = Math.abs(ta - sortedRun[i]);
-            resp = Math.abs(clock - sortedStart[i]);
-            clock += sortedRun[i];
+        int runNext = 0;
+        int removeThis = 0;
+        int currentLow = sortedRun[0];
+
+        while(count != 0) {
+            for (int i = 0; i < sortedStart.length; i++) {
+                if (sortedStart[i] <= clock && sortedRun[i] != -1) {
+                    if(runnable.contains(i)){
+                        //dont add
+                    }else {
+                        runnable.add(i);
+                    }
+                }
+            }
+            for (int i = 0; i < runnable.size(); i++) {
+                if (sortedRun[runnable.get(i)] <= currentLow) {
+                    currentLow = sortedRun[runnable.get(i)];
+                    runNext = runnable.get(i);
+                    removeThis = i;
+                }
+            }
+            clock += sortedRun[runNext];
+            runnable.remove(removeThis);
+            currentLow = totalTime;
+            count--;
+            ta = Math.abs(clock - sortedStart[runNext]);
+            wait = Math.abs(ta - sortedRun[runNext]);
+            resp = Math.abs((clock -  sortedRun[runNext]) - sortedStart[runNext]);
+            sortedRun[runNext] = -1;
             ta_total += ta;
             wait_total += wait;
             resp_total += resp;
 
+            if(runnable.isEmpty()){
+                if(clock < sortedStart[runNext + 1]) {
+                    clock = sortedStart[runNext + 1];
+                }
+            }
+
         }
+//
         System.out.println("Shortest Job First");
         printAverages(ta_total, wait_total, resp_total, numProcess);
 
@@ -303,6 +337,6 @@ public class Main {
     * @params total turn around time, wait, and response times, and total number of processes
     * */
     private static void printAverages(int t, int w, int r, int n){
-        System.out.printf("Avg. Resp.: %.2f,  Avg. T.A.: %.2f,  Avg. Wait: %.2f\n",(float)r/n, (float)w/n, (float)(t/n) );
+        System.out.printf("Avg. Resp.: %.2f,  Avg. T.A.: %.2f,  Avg. Wait: %.2f\n",(float)r/n, (float)t/n, (float)(w/n) );
     }
 }

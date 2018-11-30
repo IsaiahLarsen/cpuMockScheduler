@@ -27,22 +27,15 @@ public class Main {
             while ((data = br.readLine()) != null){
                 splitNums = data.split(" ");
                 //make integer arrays
-                //fill will apropriate data
-                for(int i = 0; i < splitNums.length; i += 2){
-                    startUp[indexStart] = Integer.parseInt(splitNums[i]);
-                    runUp[indexStart] = Integer.parseInt(splitNums[i + 1]);
-                    indexStart++;
-                }
+                //fill will appropriate data
+                indexStart = makeArray(splitNums, startUp, runUp, indexStart);
+
             }
         }else{
             //read from stdin
             while((data = in.readLine()) != null){
                 splitNums = data.split(" ");
-                for(int i = 0; i < splitNums.length; i += 2){
-                    startUp[indexStart] = Integer.parseInt(splitNums[i]);
-                    runUp[indexStart] = Integer.parseInt(splitNums[i + 1]);
-                    indexStart++;
-                }
+                indexStart = makeArray(splitNums, startUp, runUp, indexStart);
             }
 
         }
@@ -62,6 +55,23 @@ public class Main {
     }
 
     /**
+     * Method to convert read in string data to int and place in correct array
+     * @param arr string data read in
+     * @param s start array
+     * @param r run array
+     * @param index index
+     * @return index
+     */
+    public static int makeArray(String[] arr, int[] s, int[] r, int index){
+        for(int i = 0; i < arr.length; i += 2){
+            s[index] = Integer.parseInt(arr[i]);
+            r[index] = Integer.parseInt(arr[i + 1]);
+            index++;
+
+        }
+        return index;
+    }
+    /**
      * Round Robin
      * @param s start times array
      * @param r run times array
@@ -73,6 +83,8 @@ public class Main {
         int ta_total = 0;
         int wait_total = 0;
         int resp_total = 0;
+        int totalRunTime = 0;
+        boolean keepRunning;
         int[] rrStart = new int[s.length];
         int[] rrRun = new int[r.length];
         int[] fr = new int[r.length];
@@ -83,6 +95,7 @@ public class Main {
         }
         for(int i = 0; i < r.length; i++){
             rrRun[i] = r[i];
+            totalRunTime += rrRun[i];
         }
         for(int i = 0; i < fr.length; i++){
             fr[i] = -1;
@@ -93,10 +106,21 @@ public class Main {
         fr[0] = rrStart[0];
 
        do{
+           //reset boolean
+           keepRunning = false;
             // add to the queue
             for(int i = 0; i < rrStart.length; i++){
                 if(rrStart[i] <= clock && rrRun[i] > 0 && !theQueue.contains(i)){
                     theQueue.add(i);
+                }
+            }
+            if(theQueue.isEmpty()){
+                clock += q;
+                //add to queue
+                for(int i = 0; i < rrStart.length; i++){
+                    if(rrStart[i] <= clock && rrRun[i] > 0 && !theQueue.contains(i)){
+                        theQueue.add(i);
+                    }
                 }
             }
             //first in queue
@@ -120,7 +144,13 @@ public class Main {
                 resp_total += Math.abs(fr[next] - rrStart[next]);
                 theQueue.remove();
             }
-        }while(!theQueue.isEmpty());
+            //check if there is more to run
+           for(int i = 0; i < rrRun.length; i++){
+               if(rrRun[i] > 0){
+                   keepRunning = true;
+               }
+           }
+        }while(keepRunning);
         System.out.println("Round Robin:");
         printAverages(ta_total, wait_total, resp_total, s.length);
     }

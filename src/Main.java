@@ -313,18 +313,24 @@ public class Main {
         int resp_total = 0;
         int firstRun = s[0];
         int numProcess = s.length;
-
+        int[] fcStart = new int[s.length];
+        int[] fcRun = new int[r.length];
         for(int i = 0; i < s.length; i++){
-            clock += r[i];
-            if(clock < s[i]){
-                clock = s[i] + r[i];
-                firstRun = s[i];
+            fcStart[i] = s[i];
+        }
+        for(int i = 0; i < r.length; i++){
+            fcRun[i] = r[i];
+        }
+        //start clock
+        clock = s[0];
+        for(int i = 0; i < s.length; i++){
+            firstRun = clock;
+            clock += fcRun[i];
+            fcRun[i] -= fcRun[i];
 
-            }
             ta = Math.abs((clock) - s[i]);
             wait = Math.abs(ta - r[i]);
             resp = Math.abs(firstRun - s[i]);
-            firstRun += r[i];
             ta_total += ta;
             wait_total += wait;
             resp_total += resp;
@@ -339,6 +345,6 @@ public class Main {
     * @params total turn around time, wait, and response times, and total number of processes
     * */
     private static void printAverages(int t, int w, int r, int n){
-        System.out.printf("Avg. Resp.: %.2f,  Avg. T.A.: %.2f,  Avg. Wait: %.2f\n",(float)r/n, (float)t/n, (float)(w/n) );
+        System.out.printf("Avg. Resp.: %.2f,  Avg. T.A.: %.2f,  Avg. Wait: %.2f\n",(float)r/n, (float)t/n, (float)w/n );
     }
 }

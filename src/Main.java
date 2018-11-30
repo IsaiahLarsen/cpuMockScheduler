@@ -56,17 +56,16 @@ public class Main {
      * @param r run times array
      */
     private static void roundRobin(int[] s, int[] r){
-        int q = 100;
+        int q = 2;
         int clock = 0;
         int next = 0;
-        int temp = 0;
         int ta_total = 0;
         int wait_total = 0;
         int resp_total = 0;
-        int qtotal = 100;
         int[] rrStart = new int[s.length];
         int[] rrRun = new int[r.length];
         int[] fr = new int[r.length];
+
         Queue<Integer> theQueue = new LinkedList<>();
         for(int i = 0; i < s.length; i++){
             rrStart[i] = s[i];
@@ -77,55 +76,40 @@ public class Main {
         for(int i = 0; i < fr.length; i++){
             fr[i] = -1;
         }
-        fr[0] = clock;
-        clock += q;
-        for(int i = 0; i < rrStart.length; i++){
-            if(rrStart[i] <= clock){
-                theQueue.add(i);
-            }
-        }
-        next = theQueue.peek();
-        if(fr[next] < 0){
-            fr[next] = clock;
-        }
-        rrRun[next] -= q;
-        if(rrRun[next] == 0){
-            ta_total += Math.abs(clock - rrStart[next]);
-            wait_total += Math.abs((clock - rrStart[next]) - r[next]);
-            resp_total += Math.abs(fr[next] - rrStart[next]);
-            theQueue.remove();
-        }else {
-            temp = next;
-            theQueue.remove();
-            theQueue.add(temp);
-        }
 
-        while(!theQueue.isEmpty()){
+        //start clock
+        clock = rrStart[0];
+        fr[0] = rrStart[0];
 
-            clock += q;
-
+       do{
+            // add to the queue
             for(int i = 0; i < rrStart.length; i++){
-                if(rrStart[i] <= clock && rrStart[i] > qtotal){
+                if(rrStart[i] <= clock && rrRun[i] > 0 && !theQueue.contains(i)){
                     theQueue.add(i);
-                    qtotal = i;
                 }
             }
+            //first in queue
             next = theQueue.peek();
-            if(fr[next] < 0){
-                fr[next] = clock - q;
-            }
+            //check for first run time
+           if(fr[next] < 0){
+               fr[next] = clock;
+           }
             rrRun[next] -= q;
+            clock += q;
+            //check if it still has time to run
+            if(rrRun[next] > 0){
+                //take off top
+                theQueue.remove();
+                //put on bottom
+                theQueue.add(next);
+            }
             if(rrRun[next] <= 0){
                 ta_total += Math.abs(clock - rrStart[next]);
                 wait_total += Math.abs((clock - rrStart[next]) - r[next]);
                 resp_total += Math.abs(fr[next] - rrStart[next]);
                 theQueue.remove();
-            }else {
-                temp = next;
-                theQueue.remove();
-                theQueue.add(temp);
             }
-        }
+        }while(!theQueue.isEmpty());
         System.out.println("Round Robin:");
         printAverages(ta_total, wait_total, resp_total, s.length);
     }

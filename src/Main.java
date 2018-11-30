@@ -6,9 +6,7 @@ this term, I understand that both myself and the student that submitted
 the copy will receive a zero on this assignment.
 */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -16,18 +14,39 @@ public class Main {
     public static void main(String[] args) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String data;
-        int[] start = new int[]{5,11,238,254,330,637,1042,1163,1364,1404,1737,1885,2149,2230,2273,2327,2441,2498,2875,2954};
-        int[] run = new int[]{100,20,80,20,140,220,360,120,170,170,180,40,190,330,360,200,190,110,250,200};
+        String[] splitNums = new String[0];
+        if(args.length > 0) {
+            //read from file
+            File file = new File(args[0]);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            while ((data = br.readLine()) != null){
+                splitNums = data.split(" ");
+            }
+        }else{
+            //read from stdin
+            while((data = in.readLine()) != null){
+                splitNums = data.split(" ");
+            }
+
+        }
+
+        //make integer arrays
+        int[] start = new int[splitNums.length/2];
+        int[] run = new int[splitNums.length/2];
+        int indexStart = 0;
+
+        //fill will apropriate data
+        for(int i = 0; i < splitNums.length; i += 2){
+            start[indexStart] = Integer.parseInt(splitNums[i]);
+            run[indexStart] = Integer.parseInt(splitNums[i + 1]);
+            indexStart++;
+        }
+
         fcfs(start,run);
         sjf(start, run);
         strf(start, run);
         roundRobin(start, run);
-//
-//        while((data = in.readLine()) != null){
-//            data.split(" ");
-//            start.add(Integer.valueOf(data));
-//        }
-//        System.out.println(start);
+
 
     }
 
@@ -143,65 +162,41 @@ public class Main {
         int index = 0;
         int runNext = 0;
         int[] firstRun = new int[strfRun.length];
-        currentLowRunTime = strfRun[index];
+        currentLowRunTime = totalRunTime;
         firstRun[0] = strfStart[0];
-        clock = strfStart[index + 1];
-        strfRun[index] -= strfStart[index + 1];
+//        clock = strfStart[index + 1];
+//        strfRun[index] -= strfStart[index + 1];
         Map<Integer,Integer> queue = new HashMap<>();
+        clock = strfStart[0];
+        index++;
         while(clock < totalRunTime){
-            //run till next arrival
-            if(index < strfStart.length - 1) {
-                if (!queue.containsKey(index)) {
-                    queue.put(index, strfRun[index]);
-                }
-                if (!queue.containsKey(index + 1)) {
-                    queue.put(index + 1, strfRun[index + 1]);
+            //put runnable in the queue if not already in there
+            for(int i = 0; i < strfStart.length; i++){
+                if(strfStart[i] <= clock && !queue.containsKey(i)){
+                    //add to queue
+                    queue.put(i, strfRun[i]);
                 }
             }
-
             // check which is lower from queue
             for(Map.Entry<Integer, Integer> entry : queue.entrySet()){
                 int val = entry.getValue();
                 int key = entry.getKey();
-                if(val < currentLowRunTime && val != 0){
+                if(val < currentLowRunTime && val > 0){
                     currentLowRunTime = strfRun[key];
                     runNext = key;
                 }
-
-
             }
-            if(index < strfStart.length - 1) {
-                index++;
-                if(index >= strfStart.length - 1){
-                    clock += 1;
-                }else {
-                    clock += (strfStart[index + 1] - strfStart[index]);
-                }
-            }else{
-                clock += 1;
-            }
-            if((runNext) >= strfStart.length - 1){
-                if(r[runNext] == strfRun[runNext]) {
-                    firstRun[runNext] = clock - 1;
-                }
-                strfRun[runNext] -= 1;
-            }else{
-                if(r[runNext] == strfRun[runNext]) {
-                    firstRun[runNext] = clock - 1;
-                }
-                strfRun[runNext] -= (strfStart[runNext + 1] - strfStart[runNext]);
-            }
+            //run lower till next clock
+            //increment clock
+            firstRun[runNext] = clock;
+            clock += strfRun[runNext];
+            strfRun[runNext] -= strfStart[index];
             //update map
-            queue.replace(runNext, strfRun[runNext]);
-            //reset lowest run time
-            if(strfRun[runNext] <= 0){
-                currentLowRunTime = totalRunTime;
-                ta_total += Math.abs((clock - strfStart[runNext]));
-                wait_total += Math.abs((clock - strfStart[runNext]) - r[runNext]);
-                resp_total += Math.abs(firstRun[runNext] - strfStart[runNext]);
-            }
-
-
+            queue.replace(runNext, 0);
+            currentLowRunTime = totalRunTime;
+            ta_total += Math.abs((clock - strfStart[runNext]));
+            wait_total += Math.abs((clock - strfStart[runNext]) - r[runNext]);
+            resp_total += Math.abs(firstRun[runNext] - strfStart[runNext]);
         }
         System.out.println("Shortest remaining Time:");
         printAverages(ta_total, wait_total, resp_total, numProcess);
@@ -269,7 +264,7 @@ public class Main {
             wait_total += wait;
             resp_total += resp;
 
-            if(runnable.isEmpty()){
+            if(runnable.isEmpty() && (runNext + 1) < sortedStart.length){
                 if(clock < sortedStart[runNext + 1]) {
                     clock = sortedStart[runNext + 1];
                 }
@@ -309,20 +304,27 @@ public class Main {
     * @params array of ints for start times and array of ints for run times
     * */
     private static void fcfs(int[] s, int[] r) {
-        int clock = 0;
+        int clock = s[0];
         int ta = 0;
         int wait = 0;
         int resp = 0;
         int ta_total = 0;
         int wait_total = 0;
         int resp_total = 0;
+        int firstRun = s[0];
         int numProcess = s.length;
 
         for(int i = 0; i < s.length; i++){
-            ta = Math.abs((clock + r[i]) - s[i]);
-            wait = Math.abs(ta - r[i]);
-            resp = Math.abs(clock - s[i]);
             clock += r[i];
+            if(clock < s[i]){
+                clock = s[i] + r[i];
+                firstRun = s[i];
+
+            }
+            ta = Math.abs((clock) - s[i]);
+            wait = Math.abs(ta - r[i]);
+            resp = Math.abs(firstRun - s[i]);
+            firstRun += r[i];
             ta_total += ta;
             wait_total += wait;
             resp_total += resp;
